@@ -1,4 +1,3 @@
-# Tervehdys - English
 joined:
   enabled: true
   message: "<green>{pelaaja} joined the game!"
