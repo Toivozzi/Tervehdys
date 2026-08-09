@@ -32,8 +32,8 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
     public void onEnable() {
         saveDefaultConfig();
 
-        saveResourceIfMissing("fi.yml");
-        saveResourceIfMissing("en.yml");
+        saveResourceIfMissing("languages/fi.yml");
+        saveResourceIfMissing("languages/en.yml");
 
         loadLanguage();
 
@@ -72,16 +72,16 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
 
     private void loadLanguage() {
         String language = getConfig().getString("language", "fi");
-        File langFile = new File(getDataFolder(), language + ".yml");
+        File langFile = new File(getDataFolder(), "languages/" + language + ".yml");
 
         if (!langFile.exists()) {
             getLogger().warning("Kielitiedostoa '" + language + ".yml' ei löytynyt, käytetään suomea.");
-            langFile = new File(getDataFolder(), "fi.yml");
+            langFile = new File(getDataFolder(), "languages/fi.yml");
         }
 
         lang = YamlConfiguration.loadConfiguration(langFile);
 
-        InputStream defaultStream = getResource(langFile.getName());
+        InputStream defaultStream = getResource("languages/" + langFile.getName());
         if (defaultStream != null) {
             YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(defaultStream, StandardCharsets.UTF_8));
@@ -102,13 +102,13 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
         }
     }
 
-    private void saveResourceIfMissing(String fileName) {
-        File file = new File(getDataFolder(), fileName);
+    private void saveResourceIfMissing(String resourcePath) {
+        File file = new File(getDataFolder(), resourcePath);
         if (!file.exists()) {
             try {
-                saveResource(fileName, false);
+                saveResource(resourcePath, false);
             } catch (IllegalArgumentException e) {
-                getLogger().warning("Resurssia " + fileName + " ei löytynyt jarista.");
+                getLogger().warning("Resurssia " + resourcePath + " ei löytynyt jarista.");
             }
         }
     }
