@@ -1,0 +1,6 @@
+joined:
+  enabled: true
+  message: "<green>{pelaaja} joined the game!"
+left:
+  enabled: true
+  message: "<gray>{pelaaja} left the game."
