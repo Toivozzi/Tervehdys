@@ -1,6 +1,6 @@
-joined:
-  enabled: true
-  message: "<green>{pelaaja} joined the game!"
-left:
-  enabled: true
-  message: "<gray>{pelaaja} left the game."
+liittyminen:
+  käytössä: true
+  viesti: "<green>{pelaaja} ilmaantui paikalle!"
+poistuminen:
+  käytössä: true
+  viesti: "<gray>{pelaaja} poistui paikalta."
