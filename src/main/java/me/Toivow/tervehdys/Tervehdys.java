@@ -1,16 +1,22 @@
 package me.Toivow.tervehdys;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.model.user.User;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -22,11 +28,16 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
 
     private FileConfiguration lang;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacyAmpersand();
 
     private String joinEnabledPath;
     private String joinMessagePath;
     private String quitEnabledPath;
     private String quitMessagePath;
+
+    private LuckPerms luckPerms;
+    private boolean mukautettuChatKaytossa;
+    private String mukautettuChatFormaatti;
 
     @Override
     public void onEnable() {
@@ -36,6 +47,8 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
         saveResourceIfMissing("languages/en.yml");
 
         loadLanguage();
+        loadMukautettuChat();
+        setupLuckPerms();
 
         getServer().getPluginManager().registerEvents(this, this);
 
@@ -60,6 +73,7 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
 
             reloadConfig();
             loadLanguage();
+            loadMukautettuChat();
 
             sender.sendMessage(miniMessage.deserialize(
                     "<green>Tervehdys ladattu uudelleen! Kieli: <white>" + getConfig().getString("language", "fi")));
@@ -102,6 +116,36 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
         }
     }
 
+    private void loadMukautettuChat() {
+        mukautettuChatKaytossa = getConfig().getBoolean("Mukautettu-Chat.Käytössä", false);
+        mukautettuChatFormaatti = getConfig().getString("Mukautettu-Chat.Formaatti", "%lprank% %player% &f%message%");
+    }
+
+    private void setupLuckPerms() {
+        if (getServer().getPluginManager().getPlugin("LuckPerms") == null) {
+            return;
+        }
+
+        RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
+        if (provider != null) {
+            luckPerms = provider.getProvider();
+        }
+    }
+
+    private String getLuckPermsRank(Player player) {
+        if (luckPerms == null) {
+            return "";
+        }
+
+        User user = luckPerms.getUserManager().getUser(player.getUniqueId());
+        if (user == null) {
+            return "";
+        }
+
+        String prefix = user.getCachedData().getMetaData().getPrefix();
+        return prefix != null ? prefix : "";
+    }
+
     private void saveResourceIfMissing(String resourcePath) {
         File file = new File(getDataFolder(), resourcePath);
         if (!file.exists()) {
@@ -120,9 +164,10 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
             return;
         }
 
-        String raw = lang.getString(joinMessagePath, "<green>{pelaaja} liittyi peliin.");
-        String parsed = raw.replace("{pelaaja}", event.getPlayer().getName());
-        Component message = miniMessage.deserialize(parsed);
+        String raw = lang.getString(joinMessagePath, "&a%player% liittyi peliin.");
+        String parsed = raw.replace("%player%", event.getPlayer().getName())
+                .replace("%lprank%", getLuckPermsRank(event.getPlayer()));
+        Component message = legacySerializer.deserialize(parsed);
 
         event.joinMessage(message);
     }
@@ -134,10 +179,34 @@ public class Tervehdys extends JavaPlugin implements Listener, CommandExecutor {
             return;
         }
 
-        String raw = lang.getString(quitMessagePath, "<gray>{pelaaja} poistui pelistä.");
-        String parsed = raw.replace("{pelaaja}", event.getPlayer().getName());
-        Component message = miniMessage.deserialize(parsed);
+        String raw = lang.getString(quitMessagePath, "&7%player% poistui pelistä.");
+        String parsed = raw.replace("%player%", event.getPlayer().getName())
+                .replace("%lprank%", getLuckPermsRank(event.getPlayer()));
+        Component message = legacySerializer.deserialize(parsed);
 
         event.quitMessage(message);
+    }
+
+    @EventHandler
+    public void onChat(AsyncChatEvent event) {
+        if (!mukautettuChatKaytossa) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        String rank = getLuckPermsRank(player);
+        String format = mukautettuChatFormaatti
+                .replace("%lprank%", rank)
+                .replace("%player%", player.getName());
+
+        int messageIndex = format.indexOf("%message%");
+        String prefixPart = messageIndex >= 0 ? format.substring(0, messageIndex) : format;
+        String suffixPart = messageIndex >= 0 ? format.substring(messageIndex + "%message%".length()) : "";
+
+        Component prefixComponent = legacySerializer.deserialize(prefixPart);
+        Component suffixComponent = legacySerializer.deserialize(suffixPart);
+
+        event.renderer((source, sourceDisplayName, message, viewer) ->
+                Component.empty().append(prefixComponent).append(message).append(suffixComponent));
     }
 }

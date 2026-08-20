@@ -1,6 +1,8 @@
+# Luckperms rank: %lprank%
+# Player name: %player%
 liittyminen:
   käytössä: true
-  viesti: "<green>{pelaaja} ilmaantui paikalle!"
+  viesti: "&a%player% ilmaantui paikalle!"
 poistuminen:
   käytössä: true
-  viesti: "<gray>{pelaaja} poistui paikalta."
+  viesti: "&c%player% poistui paikalta."

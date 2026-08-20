@@ -1,2 +1,9 @@
 # Select Language / Valitse kieli fi/en
 language: "fi"
+
+# Mukautettu-Chat / Custom chat formatter
+Mukautettu-Chat:
+  Käytössä: false
+  # Luckperms rank: %lprank%
+  # Player name: %player%
+  Formaatti: "%lprank% %player% &f%message%"

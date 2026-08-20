@@ -4,6 +4,7 @@ main: me.Toivow.tervehdys.Tervehdys
 api-version: '1.21'
 author: Toivow
 description: Tervehdys join/leave message
+softdepend: [LuckPerms]
 commands:
   tervehdys:
     description: Tervehdys reload

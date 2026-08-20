@@ -1,6 +1,8 @@
+# Luckperms rank: %lprank%
+# Player name: %player%
 joined:
   enabled: true
-  message: "<green>{pelaaja} joined the game!"
+  message: "&a%player% joined the game!"
 left:
   enabled: true
-  message: "<gray>{pelaaja} left the game."
+  message: "&c%player% left the game."
